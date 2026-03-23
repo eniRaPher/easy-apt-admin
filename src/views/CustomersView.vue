@@ -1,0 +1,253 @@
+<template>
+  <div>
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-slate-800">ลูกค้า (Customers)</h2>
+      <button @click="openModal('add')" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center space-x-2">
+        <Plus class="w-4 h-4" />
+        <span>เพิ่มลูกค้า</span>
+      </button>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-4">ชื่อ - นามสกุล</th>
+              <th class="px-6 py-4">เลขบัตรประชาชน</th>
+              <th class="px-6 py-4">ห้อง</th>
+              <th class="px-6 py-4">เบอร์โทรศัพท์</th>
+              <th class="px-6 py-4">สถานะ</th>
+              <th class="px-6 py-4 text-right">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="customer in customers" :key="customer.id" class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4 font-medium text-slate-800 flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs uppercase">
+                  {{ customer.name.charAt(0) }}
+                </div>
+                <span>{{ customer.name }}</span>
+              </td>
+              <td class="px-6 py-4">{{ customer.idCard || '-' }}</td>
+              <td class="px-6 py-4">{{ customer.room }}</td>
+              <td class="px-6 py-4">{{ customer.phone }}</td>
+              <td class="px-6 py-4">
+                <span :class="[
+                  'px-2.5 py-1 rounded-full text-xs font-medium',
+                  customer.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                ]">
+                  {{ customer.status === 'Active' ? 'ผู้เช่าปัจจุบัน' : 'ย้ายออก' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right space-x-3">
+                <button @click="openModal('edit', customer)" class="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">แก้ไข</button>
+                <button @click="openDeleteModal(customer)" class="text-red-500 hover:text-red-700 font-medium text-sm transition-colors">ลบ</button>
+              </td>
+            </tr>
+            <tr v-if="customers.length === 0">
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500">ไม่มีข้อมูลลูกค้าในระบบ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Create/Edit Modal Overlay -->
+    <div v-if="isModalOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
+          <h3 class="font-bold text-lg text-slate-800">{{ modalMode === 'add' ? 'เพิ่มข้อมูลลูกค้าใหม่' : 'แก้ไขข้อมูลลูกค้า' }}</h3>
+          <button @click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors"><X class="w-5 h-5"/></button>
+        </div>
+        
+        <!-- Modal Body Form -->
+        <form @submit.prevent="saveCustomer" class="flex flex-col flex-1 overflow-hidden">
+          <div class="p-6 overflow-y-auto space-y-6 flex-1">
+            
+            <!-- Section 1: Personal Info -->
+            <div class="space-y-4">
+              <h4 class="font-bold text-sm text-primary-700 uppercase tracking-wider border-b border-slate-100 pb-2">ข้อมูลส่วนตัวและสถานที่พัก</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อ - นามสกุล <span class="text-red-500">*</span></label>
+                  <input v-model="form.name" type="text" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น สมชาย รักดี">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">เลขประจำตัวประชาชน <span class="text-red-500">*</span></label>
+                  <input v-model="form.idCard" type="text" required pattern="\d{13}" title="กรุณากรอกตัวเลข 13 หลัก" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เลข 13 หลัก">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">ห้องที่พัก <span class="text-slate-400 font-normal text-xs ml-1">(ระบุอัตโนมัติ)</span></label>
+                  <input v-model="form.room" type="text" disabled class="w-full border border-slate-300 bg-slate-100/70 text-slate-500 rounded-lg px-3 py-2 text-sm cursor-not-allowed outline-none" placeholder="รอผูกสัญญาเช่าที่เมนูห้องพัก">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
+                  <input v-model="form.phone" type="tel" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น 081-xxx-xxxx">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">สถานะ</label>
+                  <select v-model="form.status" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    <option value="Active">ผู้เช่าปัจจุบัน</option>
+                    <option value="Inactive">ย้ายออก</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">จำนวนผู้อยู่อาศัยร่วม (คน)</label>
+                  <input v-model="form.coResidents" type="number" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="1">
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Additional Info -->
+            <div class="space-y-4 pt-2">
+              <h4 class="font-bold text-sm text-primary-700 uppercase tracking-wider border-b border-slate-100 pb-2">ข้อมูลเพิ่มเติม (สำหรับนิติบุคคล)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">ทะเบียนรถ (ยนต์/จักรยานยนต์)</label>
+                  <input v-model="form.vehicleReg" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น กข 1234 กทม.">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">อาชีพ / สถานที่ทำงาน</label>
+                  <input v-model="form.occupation" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น พนักงานบริษัท C">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อผู้ติดต่อฉุกเฉิน</label>
+                  <input v-model="form.emergencyContact" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="ชื่อญาติ/เพื่อนสนิท">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">เบอร์ฉุกเฉิน</label>
+                  <input v-model="form.emergencyPhone" type="tel" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เบอร์โทรผู้ติดต่อฉุกเฉิน">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Modal Footer -->
+          <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 flex-shrink-0">
+            <button type="button" @click="closeModal" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ยกเลิก</button>
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors">บันทึกข้อมูล</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="isDeleteModalOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="p-6 text-center">
+          <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle class="w-8 h-8" />
+          </div>
+          <h3 class="font-bold text-xl text-slate-800 mb-2">ยืนยันการลบข้อมูล</h3>
+          <p class="text-slate-500 text-sm">คุณแน่ใจหรือไม่ที่จะลบข้อมูลของ <strong>{{ customerToDelete?.name }}</strong> ? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex justify-center space-x-3 gap-2">
+          <button @click="isDeleteModalOpen = false" class="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ยกเลิก</button>
+          <button @click="confirmDelete" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">ยืนยันลบ</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+import { Plus, X, AlertTriangle } from 'lucide-vue-next'
+
+const customers = ref([
+  { id: 1, name: 'สมชาย รักดี', idCard: '1100200300400', room: 'A101', phone: '081-234-5678', status: 'Active' },
+  { id: 2, name: 'สมหญิง สุขใจ', idCard: '1200300400500', room: 'A102', phone: '089-876-5432', status: 'Active' },
+  { id: 3, name: 'มานะ มานี', idCard: '1300400500600', room: 'B205', phone: '085-111-2222', status: 'Inactive' },
+  { id: 4, name: 'ปิติ ชูใจ', idCard: '1400500600700', room: 'C301', phone: '082-333-4444', status: 'Active' },
+  { id: 5, name: 'วีระ เก่งกาจ', idCard: '1500600700800', room: 'A105', phone: '084-555-6666', status: 'Active' },
+])
+
+// --- Form & Create/Edit Modal Logic ---
+const isModalOpen = ref(false)
+const modalMode = ref('add') // 'add' or 'edit'
+const editingId = ref(null)
+
+const form = reactive({
+  name: '',
+  idCard: '',
+  room: '',
+  phone: '',
+  status: 'Active',
+  vehicleReg: '',
+  emergencyContact: '',
+  emergencyPhone: '',
+  occupation: '',
+  coResidents: 1
+})
+
+const openModal = (mode, customer = null) => {
+  modalMode.value = mode
+  if (mode === 'edit' && customer) {
+    editingId.value = customer.id
+    form.name = customer.name
+    form.idCard = customer.idCard || ''
+    form.room = customer.room
+    form.phone = customer.phone
+    form.status = customer.status
+    form.vehicleReg = customer.vehicleReg || ''
+    form.emergencyContact = customer.emergencyContact || ''
+    form.emergencyPhone = customer.emergencyPhone || ''
+    form.occupation = customer.occupation || ''
+    form.coResidents = customer.coResidents || 1
+  } else {
+    // Reset form for 'add'
+    editingId.value = null
+    form.name = ''
+    form.idCard = ''
+    form.room = ''
+    form.phone = ''
+    form.status = 'Active'
+    form.vehicleReg = ''
+    form.emergencyContact = ''
+    form.emergencyPhone = ''
+    form.occupation = ''
+    form.coResidents = 1
+  }
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+}
+
+const saveCustomer = () => {
+  if (modalMode.value === 'add') {
+    // Gen ID roughly
+    const newId = customers.value.length ? Math.max(...customers.value.map(c => c.id)) + 1 : 1
+    customers.value.push({ id: newId, ...form })
+  } else if (modalMode.value === 'edit') {
+    const index = customers.value.findIndex(c => c.id === editingId.value)
+    if (index !== -1) {
+      customers.value[index] = { id: editingId.value, ...form }
+    }
+  }
+  closeModal()
+}
+
+// --- Delete Modal Logic ---
+const isDeleteModalOpen = ref(false)
+const customerToDelete = ref(null)
+
+const openDeleteModal = (customer) => {
+  customerToDelete.value = customer
+  isDeleteModalOpen.value = true
+}
+
+const confirmDelete = () => {
+  if (customerToDelete.value) {
+    customers.value = customers.value.filter(c => c.id !== customerToDelete.value.id)
+  }
+  isDeleteModalOpen.value = false
+  customerToDelete.value = null
+}
+</script>
