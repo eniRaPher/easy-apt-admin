@@ -7,13 +7,84 @@
           <Download class="w-4 h-4" />
           <span>ส่งออก (Export)</span>
         </button>
-        <button class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center space-x-2">
+        <button @click="createNewBill" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center space-x-2">
           <Plus class="w-4 h-4" />
           <span>สร้างบิลใหม่</span>
         </button>
       </div>
     </div>
 
+    <!-- Dashboard Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500 mb-1">ร่าง (Draft)</p>
+          <p class="text-2xl font-bold text-slate-800">{{ billsCounts.Draft }}</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+          <FileEdit class="w-6 h-6" />
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500 mb-1">รอชำระ (Pending)</p>
+          <p class="text-2xl font-bold text-amber-600">{{ billsCounts.Pending }}</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+          <Clock class="w-6 h-6" />
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500 mb-1">ชำระแล้ว (Paid)</p>
+          <p class="text-2xl font-bold text-emerald-600">{{ billsCounts.Paid }}</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <CheckCircle class="w-6 h-6" />
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500 mb-1">ยกเลิก (Cancelled)</p>
+          <p class="text-2xl font-bold text-red-600">{{ billsCounts.Cancelled }}</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+          <XCircle class="w-6 h-6" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2 w-full sm:w-auto">
+        <div class="p-2 bg-primary-50 text-primary-600 rounded-lg">
+          <Filter class="w-5 h-5" />
+        </div>
+        <span class="text-sm font-bold text-slate-700">คัดกรองบิล:</span>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+        <!-- Month Filter -->
+        <div class="relative w-full sm:w-auto">
+          <input 
+            type="month" 
+            v-model="filterMonth" 
+            class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block px-3 py-2 outline-none cursor-pointer"
+          />
+          <button v-if="filterMonth" @click="filterMonth = ''" class="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 bg-slate-50 px-1" title="ล้างตัวกรองเดือน">
+            &times;
+          </button>
+        </div>
+        
+        <!-- Status Filter -->
+        <select v-model="filterStatus" class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-sm font-medium rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block px-3 py-2 outline-none" :class="filterStatus === 'Paid' ? 'text-emerald-700' : filterStatus === 'Pending' ? 'text-amber-700' : filterStatus === 'Cancelled' ? 'text-red-700' : 'text-slate-700'">
+          <option value="all" class="text-slate-700">ทุกสถานะ (All Status)</option>
+          <option value="Draft" class="text-slate-700">ร่าง (Draft)</option>
+          <option value="Pending" class="text-amber-700">รอชำระ (Pending)</option>
+          <option value="Paid" class="text-emerald-700">ชำระแล้ว (Paid)</option>
+          <option value="Cancelled" class="text-red-700">ยกเลิก (Cancelled)</option>
+        </select>
+      </div>
+    </div>
     <!-- Table Container -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="overflow-x-auto">
@@ -26,45 +97,185 @@
               <th class="px-6 py-4 text-right">ค่าเช่า</th>
               <th class="px-6 py-4 text-right">ค่ามิเตอร์ (ไฟ)</th>
               <th class="px-6 py-4 text-right">ค่าน้ำ</th>
-              <th class="px-6 py-4 text-right">ค่าส่วนกลาง</th>
+              <th class="px-6 py-4 text-right">ค่าอื่นๆ</th>
               <th class="px-6 py-4 text-right">ยอดรวม</th>
               <th class="px-6 py-4">สถานะ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="bill in bills" :key="bill.id" class="hover:bg-slate-50 transition-colors">
+            <tr v-for="bill in filteredBills" :key="bill.id" @click="openVerifyModal(bill)" class="hover:bg-slate-50 transition-colors cursor-pointer">
               <td class="px-6 py-4 font-medium text-primary-600">{{ bill.code }}</td>
               <td class="px-6 py-4 font-bold text-slate-800">{{ bill.room }}</td>
               <td class="px-6 py-4">{{ bill.createdAt }}</td>
               <td class="px-6 py-4 text-right">฿{{ bill.rent.toLocaleString() }}</td>
               <td class="px-6 py-4 text-right">฿{{ bill.electric.toLocaleString() }}</td>
               <td class="px-6 py-4 text-right">฿{{ bill.water.toLocaleString() }}</td>
-              <td class="px-6 py-4 text-right">฿{{ bill.common.toLocaleString() }}</td>
+              <td class="px-6 py-4 text-right text-slate-500">฿{{ bill.otherFees?.reduce((sum, f) => sum + f.amount, 0).toLocaleString() || '0' }}</td>
               <td class="px-6 py-4 text-right font-bold text-slate-800">฿{{ bill.total.toLocaleString() }}</td>
               <td class="px-6 py-4">
                 <span :class="[
-                  'px-2.5 py-1 rounded-full text-xs font-medium',
-                  bill.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                  'px-2.5 py-1 rounded-full text-xs font-medium border',
+                  bill.status === 'Draft' ? 'bg-slate-100 text-slate-700 border-slate-200' : 
+                  bill.status === 'Pending' ? 'bg-amber-100 text-amber-700 border-amber-200' : 
+                  bill.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 
+                  bill.status === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-700'
                 ]">
-                  {{ bill.status === 'Paid' ? 'ชำระแล้ว' : 'รอชำระ' }}
+                  {{ 
+                    bill.status === 'Draft' ? 'ร่าง' : 
+                    bill.status === 'Pending' ? 'รอชำระ' : 
+                    bill.status === 'Paid' ? 'ชำระแล้ว' : 
+                    bill.status === 'Cancelled' ? 'ยกเลิก' : bill.status 
+                  }}
                 </span>
+              </td>
+            </tr>
+            <tr v-if="filteredBills.length === 0">
+              <td colspan="9" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center justify-center text-slate-400">
+                  <FileX class="w-12 h-12 mb-3 text-slate-300" />
+                  <p class="text-lg font-bold text-slate-600">ไม่พบบิล</p>
+                  <p class="text-sm">ไม่มีบิลที่ตรงกับตัวกรองที่คุณเลือก กรุณาลองเปลี่ยนตัวเลือกใหม่</p>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Select Customer Modal (Create Bill) -->
+    <div v-if="isCreateBillModalOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center">
+            <Receipt class="w-5 h-5 mr-2 text-primary-600" />
+            สร้างบิลใหม่
+          </h3>
+          <button @click="isCreateBillModalOpen = false" class="text-slate-400 hover:text-slate-600"><X class="w-5 h-5"/></button>
+        </div>
+        <div class="p-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกผู้เช่า / ห้อง</label>
+          <select v-model="selectedCustomerForNewBill" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none font-medium">
+            <option value="" disabled>-- กรุณาเลือก --</option>
+            <option v-for="c in availableCustomers" :key="c.id" :value="c">ห้อง {{ c.room }} - {{ c.name }}</option>
+          </select>
+          <p class="text-xs text-slate-500 mt-2">ค่าที่จอดรถจะถูกดึงข้อมูลจากลูกค้าที่เลือกอัตโนมัติ</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex justify-end space-x-3 gap-2 border-t border-slate-100">
+          <button @click="isCreateBillModalOpen = false" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ยกเลิก</button>
+          <button :disabled="!selectedCustomerForNewBill" @click="confirmCreateNewBill" class="px-4 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">สร้างบิลเปล่า</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bill Detail Modal -->
+    <BillDetailModal
+      :is-open="isVerifyModalOpen"
+      :bill="selectedBill"
+      @close="closeVerifyModal"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Plus, Download } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Plus, Download, Filter, FileX, FileEdit, Clock, CheckCircle, XCircle, Send, X, Receipt } from 'lucide-vue-next'
+import BillDetailModal from '../components/BillDetailModal.vue'
+import { settingsStore } from '../store/settingsStore'
+
+const isVerifyModalOpen = ref(false)
+const selectedBill = ref(null)
+
+const openVerifyModal = (bill) => {
+  selectedBill.value = bill
+  isVerifyModalOpen.value = true
+}
+
+const closeVerifyModal = () => {
+  isVerifyModalOpen.value = false
+}
+
+const filterMonth = ref('')
+const filterStatus = ref('all')
 
 const bills = ref([
-  { id: 1, code: 'INV-202310-001', room: 'A101', createdAt: '01 ต.ค. 2023', rent: 4500, electric: 850, water: 150, common: 300, total: 5800, status: 'Paid' },
-  { id: 2, code: 'INV-202310-002', room: 'A102', createdAt: '01 ต.ค. 2023', rent: 4500, electric: 620, water: 150, common: 300, total: 5570, status: 'Pending' },
-  { id: 3, code: 'INV-202310-003', room: 'B205', createdAt: '01 ต.ค. 2023', rent: 5000, electric: 1200, water: 200, common: 300, total: 6700, status: 'Paid' },
-  { id: 4, code: 'INV-202310-004', room: 'C301', createdAt: '01 ต.ค. 2023', rent: 4000, electric: 450, water: 100, common: 300, total: 4850, status: 'Pending' },
+  { id: 1, code: 'INV-202310-001', room: 'A101', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4500, electric: 850, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5800, status: 'Paid' },
+  { id: 2, code: 'INV-202310-002', room: 'A102', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4500, electric: 620, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5570, status: 'Pending' },
+  { id: 3, code: 'INV-202310-003', room: 'B205', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 5000, electric: 1200, water: 200, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 6700, status: 'Draft' },
+  { id: 4, code: 'INV-202310-004', room: 'C301', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4000, electric: 450, water: 100, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 4850, status: 'Cancelled' },
+  { id: 5, code: 'INV-202309-001', room: 'A101', createdAt: '01 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4500, electric: 800, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5750, status: 'Paid' },
+  { id: 6, code: 'INV-202309-002', room: 'A102', createdAt: '01 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4500, electric: 550, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5500, status: 'Paid' },
+  { id: 7, code: 'INV-202309-003', room: 'B205', createdAt: '04 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 5000, electric: 1100, water: 200, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 6600, status: 'Paid' },
+  { id: 8, code: 'INV-202309-004', room: 'C301', createdAt: '05 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4000, electric: 480, water: 100, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 4880, status: 'Paid' },
+  { id: 9, code: 'INV-202308-001', room: 'A101', createdAt: '01 ส.ค. 2023', monthCode: '2023-08', month: 'สิงหาคม 2023', rent: 4500, electric: 820, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5770, status: 'Paid' }
 ])
+
+const billsCounts = computed(() => {
+  return {
+    Draft: bills.value.filter(b => b.status === 'Draft').length,
+    Pending: bills.value.filter(b => b.status === 'Pending').length,
+    Paid: bills.value.filter(b => b.status === 'Paid').length,
+    Cancelled: bills.value.filter(b => b.status === 'Cancelled').length
+  }
+})
+
+const isCreateBillModalOpen = ref(false)
+const selectedCustomerForNewBill = ref('')
+
+const availableCustomers = ref([
+  { id: 1, name: 'สมชาย รักดี', room: 'A101', parkingZone: 1 },
+  { id: 2, name: 'สมหญิง สุขใจ', room: 'A102', parkingZone: '' },
+  { id: 4, name: 'ปิติ ชูใจ', room: 'C301', parkingZone: 1 },
+  { id: 5, name: 'วีระ เก่งกาจ', room: 'A105', parkingZone: '' },
+])
+
+const createNewBill = () => {
+  selectedCustomerForNewBill.value = ''
+  isCreateBillModalOpen.value = true
+}
+
+const confirmCreateNewBill = () => {
+  const customer = selectedCustomerForNewBill.value
+  const newId = bills.value.length + 1
+  const todayStr = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })
+  const yyyyMm = new Date().toISOString().slice(0, 7)
+  
+  // Clone current global settings so future changes don't corrupt this bill
+  const snapshotElecRate = settingsStore.elecRate
+  const snapshotWaterRate = settingsStore.waterRate
+  const snapshotOtherFees = JSON.parse(JSON.stringify(settingsStore.otherFees))
+  
+  // Find parking fee
+  const zoneId = customer.parkingZone
+  const parkingZoneSetting = settingsStore.parkingZones.find(z => z.id === zoneId)
+  const parkingFee = parkingZoneSetting ? parkingZoneSetting.rate : 0
+
+  const otherTotal = snapshotOtherFees.reduce((acc, f) => acc + f.amount, 0)
+  
+  bills.value.unshift({
+    id: newId,
+    code: `INV-NEW-${newId.toString().padStart(3, '0')}`,
+    room: customer.room,
+    createdAt: todayStr,
+    monthCode: yyyyMm,
+    month: 'เดือนปัจจุบัน',
+    rent: 4500, electric: 0, water: 0, 
+    elecRate: snapshotElecRate,
+    waterRate: snapshotWaterRate,
+    otherFees: snapshotOtherFees,
+    parkingFee: parkingFee,
+    total: 4500 + otherTotal + parkingFee,
+    status: 'Draft'
+  })
+  isCreateBillModalOpen.value = false
+}
+
+const filteredBills = computed(() => {
+  return bills.value.filter(bill => {
+    // If filterMonth is empty, show all. Otherwise match with bill.monthCode.
+    const matchMonth = !filterMonth.value || bill.monthCode === filterMonth.value
+    const matchStatus = filterStatus.value === 'all' || bill.status === filterStatus.value
+    return matchMonth && matchStatus
+  })
+})
 </script>

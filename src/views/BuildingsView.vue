@@ -21,7 +21,7 @@
         <div v-if="currentBuilding" class="flex space-x-2 ml-4">
           <button @click="openBuildingModal('edit', currentBuilding)" class="text-blue-600 border border-blue-200 hover:text-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center space-x-1 text-sm font-medium">
             <Edit class="w-4 h-4" />
-            <span>แก้ไขชื่อ</span>
+            <span>แก้ไขชื่ออาคาร</span>
           </button>
           <button @click="openConfirmDelete('building', currentBuilding)" class="text-red-500 border border-red-200 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1 text-sm font-medium">
             <Trash2 class="w-4 h-4" />

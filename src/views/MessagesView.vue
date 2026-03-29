@@ -1,49 +1,66 @@
 <template>
   <div class="max-w-4xl mx-auto">
-    <h2 class="text-2xl font-bold text-slate-800 mb-6">ส่งข้อความ (Broadcast)</h2>
+    <h2 class="text-2xl font-bold text-slate-800 mb-6">เทมเพลตข้อความ (Broadcast)</h2>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
       <form @submit.prevent="sendMessage">
         
         <!-- Broadcast Type -->
         <div class="mb-8">
-          <label class="block text-sm font-semibold text-slate-700 mb-4">ช่องทางการส่งข้อความ</label>
+          <label class="block text-sm font-semibold text-slate-700 mb-4">ประเภทบรอดแคสต์</label>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             
-            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none"
-                   :class="broadcastType === 'sms' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200'">
+            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all"
+                   :class="broadcastType === 'sms' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-slate-300'">
               <input type="radio" name="broadcast_type" value="sms" v-model="broadcastType" class="sr-only">
               <span class="flex flex-1">
                 <span class="flex flex-col">
-                  <span class="block text-sm font-medium text-slate-900">SMS</span>
-                  <span class="mt-1 flex items-center text-sm text-slate-500">ส่งข้อความไปยังเบอร์มือถือ</span>
+                  <span class="block text-sm font-bold text-slate-900">ค่าน้ำ</span>
+                  <span class="mt-1 flex items-center text-xs text-slate-500">แจ้งเตือนให้ส่งเลขมิเตอร์</span>
                 </span>
               </span>
               <MessageSquare class="h-5 w-5 text-primary-600" v-if="broadcastType === 'sms'" />
             </label>
 
-            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none"
-                   :class="broadcastType === 'line' ? 'border-green-500 ring-1 ring-green-500' : 'border-slate-200'">
+            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all"
+                   :class="broadcastType === 'line' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-slate-300'">
               <input type="radio" name="broadcast_type" value="line" v-model="broadcastType" class="sr-only">
               <span class="flex flex-1">
                 <span class="flex flex-col">
-                  <span class="block text-sm font-medium text-slate-900">LINE Official</span>
-                  <span class="mt-1 flex items-center text-sm text-slate-500">ส่งแจ้งเตือนผ่าน LINE</span>
+                  <span class="block text-sm font-bold text-slate-900">ค่าไฟ</span>
+                  <span class="mt-1 flex items-center text-xs text-slate-500">แจ้งเตือนให้ส่งเลขมิเตอร์</span>
                 </span>
               </span>
-              <MessageCircle class="h-5 w-5 text-green-500" v-if="broadcastType === 'line'" />
+              <MessageCircle class="h-5 w-5 text-primary-500" v-if="broadcastType === 'line'" />
             </label>
 
-            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none"
-                   :class="broadcastType === 'email' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200'">
+            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all"
+                   :class="broadcastType === 'email' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'">
               <input type="radio" name="broadcast_type" value="email" v-model="broadcastType" class="sr-only">
               <span class="flex flex-1">
                 <span class="flex flex-col">
-                  <span class="block text-sm font-medium text-slate-900">Email</span>
-                  <span class="mt-1 flex items-center text-sm text-slate-500">ส่งอีเมลไปยังผู้เช่า</span>
+                  <span class="block text-sm font-bold text-slate-900">ชำระบิล</span>
+                  <span class="mt-1 flex items-center text-xs text-slate-500">แจ้งเตือนให้ส่งหลักฐานการชำระเงิน</span>
                 </span>
               </span>
               <Mail class="h-5 w-5 text-blue-500" v-if="broadcastType === 'email'" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div class="mb-4 sm:mb-0">
+            <label class="block text-sm font-bold text-slate-800">สถานะการทำงาน</label>
+            <p class="text-xs text-slate-500 mt-1">เปิดใช้งานการส่งข้อความอัตโนมัติสำหรับช่องทางนี้</p>
+          </div>
+          <div class="flex items-center space-x-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+            <span class="text-sm font-bold uppercase tracking-wide" :class="broadcastSettings[broadcastType] ? 'text-green-600' : 'text-slate-400'">
+              {{ broadcastSettings[broadcastType] ? 'Active' : 'Inactive' }}
+            </span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="broadcastSettings[broadcastType]" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
             </label>
           </div>
         </div>
@@ -57,6 +74,34 @@
             <option>เฉพาะอาคาร A</option>
             <option>เฉพาะอาคาร B</option>
           </select>
+        </div>
+
+        <!-- Schedule -->
+        <div class="mb-6">
+          <label class="flex items-center text-sm font-semibold text-slate-700 mb-2">
+            <Calendar class="w-4 h-4 mr-2 text-indigo-500" />
+            กำหนดเวลาบรอดแคสต์
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">วันที่ของเดือน (1-31)</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar class="h-4 w-4 text-slate-400" />
+                </div>
+                <input type="number" min="1" max="31" v-model="scheduleDay" class="block w-full rounded-md border-slate-300 py-3 pl-9 pr-3 text-base focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm border" placeholder="เช่น 25">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">เวลาที่จะบรอดแคสต์ (น.)</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Clock class="h-4 w-4 text-slate-400" />
+                </div>
+                <input type="time" v-model="scheduleTime" class="block w-full rounded-md border-slate-300 py-3 pl-9 pr-3 text-base focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm border">
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Message Template -->
@@ -78,7 +123,7 @@
           </button>
           <button type="submit" class="bg-primary-600 border border-transparent rounded-md shadow-sm py-2 px-6 flex items-center justify-center text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 space-x-2">
             <Send class="w-4 h-4" />
-            <span>ส่งข้อความเลย</span>
+            <span>บันทึก</span>
           </button>
         </div>
       </form>
@@ -87,13 +132,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { MessageSquare, MessageCircle, Mail, Send } from 'lucide-vue-next'
+import { ref, reactive } from 'vue'
+import { MessageSquare, MessageCircle, Mail, Send, Calendar, Clock } from 'lucide-vue-next'
+
+const broadcastSettings = reactive({
+  sms: true,
+  line: true,
+  email: false
+})
 
 const broadcastType = ref('sms')
+const scheduleDay = ref('25')
+const scheduleTime = ref('10:00')
 const messageBody = ref('เรียนคุณ {name} ห้อง {room},\n\nทางอพาร์ทเมนต์ขอแจ้งเตือนยอดค้างชำระจำนวน {amount} บาท รบกวนชำระเงินภายในวันที่ 5 ของเดือน\n\nขอบคุณค่ะ')
 
 const sendMessage = () => {
-  alert(`กำลังส่งข้อความผ่าน ${broadcastType.value} ไปยังผู้เช่า...`)
+  if (scheduleDay.value && scheduleTime.value) {
+    alert(`ตั้งเวลาส่งข้อความผ่าน ${broadcastType.value} ทุกวันที่ ${scheduleDay.value} เวลา ${scheduleTime.value} น. เรียบร้อยแล้ว`)
+  } else {
+    alert(`กำลังส่งข้อความผ่าน ${broadcastType.value} ไปยังผู้เช่า...`)
+  }
 }
 </script>

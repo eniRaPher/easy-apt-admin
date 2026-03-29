@@ -156,70 +156,12 @@
         </div>
       </div>
     </div>
-    <!-- Verify Payment Modal -->
-    <div v-if="isVerifyModalOpen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h3 class="font-bold text-lg text-slate-800 flex items-center"><FileCheck class="w-5 h-5 mr-2 text-blue-600"/> ตรวจสอบการชำระเงิน</h3>
-          <button @click="closeVerifyModal" class="text-slate-400 hover:text-slate-600"><X class="w-5 h-5"/></button>
-        </div>
-        <div class="p-6">
-          <div class="mb-4">
-            <h4 class="font-bold text-primary-700 mb-1">บิล: {{ selectedBill?.code }} ({{ selectedBill?.month }})</h4>
-            <p class="text-sm text-slate-500">ยอดรวมทั้งสิ้น: <span class="font-bold text-slate-800 text-lg text-primary-600">฿{{ selectedBill?.total.toLocaleString() }}</span></p>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
-             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <span class="block text-slate-500 mb-1 text-xs uppercase font-bold tracking-wider">ค่าเช่าห้อง</span>
-                <span class="font-semibold text-slate-800 border-b border-slate-200 pb-1 block">฿{{ selectedBill?.rent?.toLocaleString() || '4,500' }}</span>
-             </div>
-             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <span class="block text-slate-500 mb-1 text-xs uppercase font-bold tracking-wider">ค่าส่วนกลาง</span>
-                <span class="font-semibold text-slate-800 border-b border-slate-200 pb-1 block">฿{{ selectedBill?.commonFee?.toLocaleString() || '300' }}</span>
-             </div>
-             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="block text-slate-500 text-xs uppercase font-bold tracking-wider">ค่าไฟ ({{ selectedBill?.elecRate }} ฿/ยูนิต)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input v-if="selectedBill" v-model.number="selectedBill.elecUnits" @input="updateBillTotal" type="number" min="0" class="w-20 border border-amber-300 rounded px-2 py-1.5 text-sm font-bold text-amber-700 bg-white focus:ring-2 focus:ring-amber-500 outline-none text-center shadow-inner">
-                  <span class="text-xs text-slate-500 font-medium whitespace-nowrap">ยูนิต</span>
-                  <span class="font-semibold text-slate-800 flex-1 text-right">฿{{ ((selectedBill?.elecUnits || 0) * (selectedBill?.elecRate || 0)).toLocaleString() }}</span>
-                </div>
-             </div>
-             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="block text-slate-500 text-xs uppercase font-bold tracking-wider">ค่าน้ำ ({{ selectedBill?.waterRate }} ฿/ยูนิต)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input v-if="selectedBill" v-model.number="selectedBill.waterUnits" @input="updateBillTotal" type="number" min="0" class="w-20 border border-blue-300 rounded px-2 py-1.5 text-sm font-bold text-blue-700 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-center shadow-inner">
-                  <span class="text-xs text-slate-500 font-medium whitespace-nowrap">ยูนิต</span>
-                  <span class="font-semibold text-slate-800 flex-1 text-right">฿{{ ((selectedBill?.waterUnits || 0) * (selectedBill?.waterRate || 0)).toLocaleString() }}</span>
-                </div>
-             </div>
-          </div>
-
-          <div>
-             <span class="block text-sm font-semibold text-slate-700 mb-2">สลิปโอนเงินที่แนบมา (แนบโดยผู้เช่า)</span>
-             <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl h-56 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors group cursor-pointer relative overflow-hidden">
-                <img v-if="selectedBill?.status !== 'Pending'" src="https://images.unsplash.com/photo-1621315271772-28b1e3ebfd80?w=500&q=80" alt="slip" class="absolute inset-0 w-full h-full object-cover opacity-20" />
-                <div class="text-center group-hover:scale-105 transition-transform relative z-10">
-                   <FileCheck class="w-10 h-10 mx-auto mb-2 text-slate-400" />
-                   <p class="text-sm font-semibold text-slate-600">สลิปธนาคาร.jpg</p>
-                   <p class="text-xs mt-1">คลิกเพื่อดูรูปขนาดเต็ม</p>
-                </div>
-             </div>
-          </div>
-        </div>
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
-          <button @click="closeVerifyModal" class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ปิด</button>
-          <button v-if="selectedBill?.status === 'Pending'" @click="approvePayment" class="px-4 py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 flex items-center transition-colors shadow-sm">
-            <Check class="w-4 h-4 mr-1.5" /> อนุมัติรับชำระและออกใบเสร็จ
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Bill Detail Modal -->
+    <BillDetailModal
+      :is-open="isVerifyModalOpen"
+      :bill="selectedBill"
+      @close="closeVerifyModal"
+    />
 
     <!-- Message Modal -->
     <div v-if="isMessageModalOpen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -248,6 +190,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, UserCheck, FileText, History, Users, LogOut, AlertTriangle, CheckCircle, Plus, Wrench, Settings, X, FileCheck, Check, Send } from 'lucide-vue-next'
+import BillDetailModal from '../components/BillDetailModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -282,21 +225,6 @@ const closeVerifyModal = () => {
   isVerifyModalOpen.value = false
 }
 
-const updateBillTotal = () => {
-  if (selectedBill.value) {
-    const b = selectedBill.value
-    b.total = (b.rent || 0) + (b.commonFee || 0) + ((b.elecUnits || 0) * (b.elecRate || 0)) + ((b.waterUnits || 0) * (b.waterRate || 0))
-  }
-}
-
-const approvePayment = () => {
-  if (selectedBill.value) {
-    selectedBill.value.status = 'Paid'
-  }
-  alert(`✅ อนุมัติการชำระเงินบิล ${selectedBill.value.code} เรียบร้อยแล้ว (ระบบได้ออกใบเสร็จส่งให้ผู้เช่าแล้ว)`)
-  closeVerifyModal()
-}
-
 const isMessageModalOpen = ref(false)
 const messageText = ref('')
 
@@ -324,18 +252,18 @@ const rentalData = ref({
 })
 
 const allBills = ref([
-  { id: 1, month: 'ตุลาคม 2023', code: 'INV-10-23', total: 5800, status: 'Pending', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 2, month: 'กันยายน 2023', code: 'INV-09-23', total: 6100, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 3, month: 'สิงหาคม 2023', code: 'INV-08-23', total: 5950, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 110, elecRate: 8, waterUnits: 13.5, waterRate: 20 },
-  { id: 4, month: 'กรกฎาคม 2023', code: 'INV-07-23', total: 5800, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 5, month: 'มิถุนายน 2023', code: 'INV-06-23', total: 5800, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 6, month: 'พฤษภาคม 2023', code: 'INV-05-23', total: 6200, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 150, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 7, month: 'เมษายน 2023', code: 'INV-04-23', total: 6500, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 175, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 8, month: 'มีนาคม 2023', code: 'INV-03-23', total: 5800, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 9, month: 'กุมภาพันธ์ 2023', code: 'INV-02-23', total: 5900, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 10, month: 'มกราคม 2023', code: 'INV-01-23', total: 5800, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 11, month: 'ธันวาคม 2022', code: 'INV-12-22', total: 6100, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 12, month: 'พฤศจิกายน 2022', code: 'INV-11-22', total: 5800, status: 'Paid', rent: 4500, commonFee: 300, elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 }
+  { id: 1, month: 'ตุลาคม 2023', code: 'INV-10-23', total: 5800, status: 'Pending', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 2, month: 'กันยายน 2023', code: 'INV-09-23', total: 6100, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
+  { id: 3, month: 'สิงหาคม 2023', code: 'INV-08-23', total: 5950, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 110, elecRate: 8, waterUnits: 13.5, waterRate: 20 },
+  { id: 4, month: 'กรกฎาคม 2023', code: 'INV-07-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 5, month: 'มิถุนายน 2023', code: 'INV-06-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 6, month: 'พฤษภาคม 2023', code: 'INV-05-23', total: 6200, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 150, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 7, month: 'เมษายน 2023', code: 'INV-04-23', total: 6500, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 175, elecRate: 8, waterUnits: 15, waterRate: 20 },
+  { id: 8, month: 'มีนาคม 2023', code: 'INV-03-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 9, month: 'กุมภาพันธ์ 2023', code: 'INV-02-23', total: 5900, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 15, waterRate: 20 },
+  { id: 10, month: 'มกราคม 2023', code: 'INV-01-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
+  { id: 11, month: 'ธันวาคม 2022', code: 'INV-12-22', total: 6100, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
+  { id: 12, month: 'พฤศจิกายน 2022', code: 'INV-11-22', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 }
 ])
 
 const displayedBills = computed(() => {

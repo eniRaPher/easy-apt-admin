@@ -42,7 +42,11 @@
               <div v-if="isProfileMenuOpen" class="absolute right-0 mt-3 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-40">
                 <router-link to="/profile" @click="isProfileMenuOpen = false" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2">
                   <Settings class="w-4 h-4 text-slate-400" />
-                  <span>ตั้งค่า</span>
+                  <span>ตั้งค่าทั่วไป</span>
+                </router-link>
+                <router-link to="/financial-settings" @click="isProfileMenuOpen = false" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2">
+                  <Banknote class="w-4 h-4 text-slate-400" />
+                  <span>ตั้งค่าการเงิน</span>
                 </router-link>
                 <router-link to="/change-password" @click="isProfileMenuOpen = false" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2">
                   <Key class="w-4 h-4 text-slate-400" />
@@ -75,7 +79,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, Users, Building, Receipt, Send, User, Key, LogOut, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, Users, Building, Receipt, Send, User, Key, LogOut, Settings, Banknote } from 'lucide-vue-next'
 
 const route = useRoute()
 const isProfileMenuOpen = ref(false)
@@ -85,7 +89,7 @@ const menuItems = [
   { name: 'ลูกค้า', path: '/customers', icon: Users },
   { name: 'อาคาร', path: '/buildings', icon: Building },
   { name: 'บิล', path: '/bills', icon: Receipt },
-  { name: 'ส่งข้อความ', path: '/messages', icon: Send },
+  { name: 'บรอดแคสต์', path: '/messages', icon: Send },
 ]
 
 const currentRouteName = computed(() => {

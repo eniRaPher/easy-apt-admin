@@ -44,6 +44,11 @@ const router = createRouter({
           component: () => import('../views/ProfileView.vue'),
         },
         {
+          path: 'financial-settings',
+          name: 'FinancialSettings',
+          component: () => import('../views/FinancialSettingsView.vue'),
+        },
+        {
           path: 'change-password',
           name: 'ChangePassword',
           component: () => import('../views/ChangePasswordView.vue'),

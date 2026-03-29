@@ -111,6 +111,13 @@
                   <input v-model="form.vehicleReg" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น กข 1234 กทม.">
                 </div>
                 <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1">สถานะที่จอดรถ</label>
+                  <select v-model="form.parkingZone" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    <option value="">ไม่เช่าที่จอด</option>
+                    <option v-for="zone in parkingZones" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
+                  </select>
+                </div>
+                <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-1">อาชีพ / สถานที่ทำงาน</label>
                   <input v-model="form.occupation" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="เช่น พนักงานบริษัท C">
                 </div>
@@ -156,15 +163,16 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { Plus, X, AlertTriangle } from 'lucide-vue-next'
+import { settingsStore } from '../store/settingsStore'
 
 const customers = ref([
-  { id: 1, name: 'สมชาย รักดี', idCard: '1100200300400', room: 'A101', phone: '081-234-5678', status: 'Active' },
-  { id: 2, name: 'สมหญิง สุขใจ', idCard: '1200300400500', room: 'A102', phone: '089-876-5432', status: 'Active' },
-  { id: 3, name: 'มานะ มานี', idCard: '1300400500600', room: 'B205', phone: '085-111-2222', status: 'Inactive' },
-  { id: 4, name: 'ปิติ ชูใจ', idCard: '1400500600700', room: 'C301', phone: '082-333-4444', status: 'Active' },
-  { id: 5, name: 'วีระ เก่งกาจ', idCard: '1500600700800', room: 'A105', phone: '084-555-6666', status: 'Active' },
+  { id: 1, name: 'สมชาย รักดี', idCard: '1100200300400', room: 'A101', phone: '081-234-5678', parkingZone: 1, status: 'Active' },
+  { id: 2, name: 'สมหญิง สุขใจ', idCard: '1200300400500', room: 'A102', phone: '089-876-5432', parkingZone: '', status: 'Active' },
+  { id: 3, name: 'มานะ มานี', idCard: '1300400500600', room: 'B205', phone: '085-111-2222', parkingZone: 2, status: 'Inactive' },
+  { id: 4, name: 'ปิติ ชูใจ', idCard: '1400500600700', room: 'C301', phone: '082-333-4444', parkingZone: 1, status: 'Active' },
+  { id: 5, name: 'วีระ เก่งกาจ', idCard: '1500600700800', room: 'A105', phone: '084-555-6666', parkingZone: '', status: 'Active' },
 ])
 
 // --- Form & Create/Edit Modal Logic ---
@@ -182,8 +190,11 @@ const form = reactive({
   emergencyContact: '',
   emergencyPhone: '',
   occupation: '',
-  coResidents: 1
+  coResidents: 1,
+  parkingZone: 1,
 })
+
+const parkingZones = computed(() => settingsStore.parkingZones)
 
 const openModal = (mode, customer = null) => {
   modalMode.value = mode
@@ -199,6 +210,7 @@ const openModal = (mode, customer = null) => {
     form.emergencyPhone = customer.emergencyPhone || ''
     form.occupation = customer.occupation || ''
     form.coResidents = customer.coResidents || 1
+    form.parkingZone = customer.parkingZone || ''
   } else {
     // Reset form for 'add'
     editingId.value = null
@@ -212,6 +224,7 @@ const openModal = (mode, customer = null) => {
     form.emergencyPhone = ''
     form.occupation = ''
     form.coResidents = 1
+    form.parkingZone = ''
   }
   isModalOpen.value = true
 }
