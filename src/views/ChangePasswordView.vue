@@ -66,6 +66,7 @@
 import { ref, computed } from 'vue'
 import { Key, Lock, ShieldCheck, Save, AlertCircle } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 
@@ -87,7 +88,12 @@ const savePassword = () => {
   if (passwordMismatch.value || !isFormValid.value) return
   
   // In a real app, verify current password and issue API call here.
-  alert('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว ในการเข้าสู่ระบบครั้งหน้าโปรดใช้รหัสผ่านใหม่')
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว ในการเข้าสู่ระบบครั้งหน้าโปรดใช้รหัสผ่านใหม่',
+    confirmButtonText: 'ตกลง'
+  })
   
   form.value = {
     currentPassword: '',

@@ -137,6 +137,7 @@
 <script setup>
 import { Building, Save, Zap, Droplets, Car, Plus, Trash2, Users } from 'lucide-vue-next'
 import { settingsStore } from '../store/settingsStore'
+import Swal from 'sweetalert2'
 
 const financialData = settingsStore
 
@@ -161,6 +162,11 @@ const removeParkingZone = (id) => {
 }
 
 const saveFinancialSettings = () => {
-  alert(`ระบบได้จดจำอัตราค่าใช้จ่ายใหม่ทั้งหมดแล้ว:\n- น้ำ/ไฟ: ${financialData.elecRate} / ${financialData.waterRate}\n- ค่าใช้จ่ายอื่นๆ: ${financialData.otherFees.length} รายการ\n- เรทที่จอดรถ: ${financialData.parkingZones.length} โซน\n(จะเริ่มมีผลกับบิลใหม่ทันที)`)
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: `ระบบได้จดจำอัตราค่าใช้จ่ายใหม่ทั้งหมดแล้ว:\n- น้ำ/ไฟ: ${financialData.elecRate} / ${financialData.waterRate}\n- ค่าใช้จ่ายอื่นๆ: ${financialData.otherFees.length} รายการ\n- เรทที่จอดรถ: ${financialData.parkingZones.length} โซน\n(จะเริ่มมีผลกับบิลใหม่ทันที)`,
+    confirmButtonText: 'ตกลง'
+  })
 }
 </script>

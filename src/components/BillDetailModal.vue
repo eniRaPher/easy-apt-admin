@@ -88,17 +88,17 @@
         <div>
            <span class="block text-sm font-semibold text-slate-700 mb-2">สลิปโอนเงิน</span>
            
-           <!-- Case 1: Already Paid / Has slip from tenant -->
-           <div v-if="bill?.status !== 'Pending'" class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl h-46 p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors group cursor-pointer relative overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1621315271772-28b1e3ebfd80?w=500&q=80" alt="slip" class="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" />
-              <div class="text-center group-hover:scale-105 transition-transform relative z-10 py-4">
+           <!-- Case 1: Paid or Cancelled (Preview Only) -->
+           <div v-if="bill?.status === 'Paid' || bill?.status === 'Cancelled'" class="bg-slate-100 border-2 border-slate-300 rounded-xl min-h-[14rem] p-2 flex flex-col items-center justify-center text-slate-400 cursor-default relative overflow-hidden">
+              <img :src="uploadedSlipUrl || 'https://images.unsplash.com/photo-1621315271772-28b1e3ebfd80?w=500&q=80'" alt="slip-preview" class="absolute inset-0 w-full h-full object-cover opacity-40 hover:opacity-80 transition-opacity" />
+              <div v-if="!uploadedSlipUrl" class="text-center relative z-10 py-4 px-6 bg-white/70 backdrop-blur-sm rounded-lg shadow-sm border border-slate-200">
                  <FileCheck class="w-10 h-10 mx-auto mb-2 text-slate-700" />
-                 <p class="text-sm font-bold text-slate-800">สลิปธนาคาร.jpg</p>
-                 <p class="text-xs text-slate-600 mt-1 font-medium bg-white/70 px-2 py-0.5 rounded shadow-sm inline-block">อัปโหลดโดยผู้เช่า</p>
+                 <p class="text-sm font-bold text-slate-800">สลิปอ้างอิง.jpg</p>
+                 <p class="text-xs text-slate-600 mt-1 font-medium bg-slate-100 px-2 py-0.5 rounded shadow-sm inline-block">{{ bill?.status === 'Paid' ? 'ชำระแล้ว' : 'ยกเลิกแล้ว' }}</p>
               </div>
            </div>
 
-           <!-- Case 2: Admin uploaded a slip locally -->
+           <!-- Case 2: Draft or Pending AND has uploaded locally -->
            <div v-else-if="uploadedSlipUrl" class="bg-slate-100 border-2 border-dashed border-primary-300 rounded-xl p-2 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors group cursor-pointer relative overflow-hidden h-72" @click="triggerUpload">
               <img :src="uploadedSlipUrl" alt="uploaded-slip" class="w-full h-full object-contain drop-shadow-sm" />
               <div class="text-center absolute inset-2 flex flex-col items-center justify-center bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-lg">
@@ -107,14 +107,14 @@
               </div>
            </div>
 
-           <!-- Case 3: No slip, waiting for Tenant or Admin to upload -->
-           <div v-else class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl h-46 p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-100 hover:border-primary-400 hover:text-primary-600 transition-colors group cursor-pointer relative" @click="triggerUpload">
+           <!-- Case 3: Draft or Pending AND No Slip Yet -->
+           <div v-else class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl h-46 min-h-[12rem] p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-100 hover:border-primary-400 hover:text-primary-600 transition-colors group cursor-pointer relative" @click="triggerUpload">
               <div class="text-center group-hover:scale-105 transition-transform">
                  <div class="w-14 h-14 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400 group-hover:text-primary-500 transition-colors">
                     <UploadCloud class="w-6 h-6" />
                  </div>
-                 <p class="text-sm font-bold text-slate-700 group-hover:text-primary-700">ยังไม่มีสลิปการโอนเงิน</p>
-                 <p class="text-xs mt-1">คลิกที่นี่เพื่อแนบรูปภาพแทนผู้เช่า</p>
+                 <p class="text-sm font-bold text-slate-700 group-hover:text-primary-700">อัปโหลดสลิปการโอนเงิน</p>
+                 <p class="text-xs mt-1">คลิกที่นี่เพื่อเลือกไฟล์ภาพ</p>
               </div>
            </div>
 
@@ -147,6 +147,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { FileCheck, FileText, X, Check, Zap, Droplets, ArrowRight, Equal, UploadCloud, XCircle, Clock } from 'lucide-vue-next'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
   isOpen: {
@@ -235,9 +236,16 @@ const approvePayment = () => {
   if (props.bill) {
     props.bill.status = 'Paid'
   }
-  alert(`✅ รับชำระเงินบิล ${props.bill?.code} เรียบร้อยแล้ว`)
-  emit('approve', props.bill)
-  closeModal()
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: `✅ รับชำระเงินบิล ${props.bill?.code} เรียบร้อยแล้ว`,
+    confirmButtonText: 'ตกลง',
+    timer: 1500
+  }).then(() => {
+    emit('approve', props.bill)
+    closeModal()
+  })
 }
 
 const changeToPending = () => {
@@ -249,12 +257,23 @@ const changeToPending = () => {
 }
 
 const cancelBill = () => {
-  if (confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกบิลนี้?')) {
-    if (props.bill) {
-      props.bill.status = 'Cancelled'
+  Swal.fire({
+    title: 'ยืนยันการยกเลิกบิล',
+    text: 'คุณแน่ใจหรือไม่ว่าต้องการยกเลิกบิลนี้?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: 'ใช่, ยกเลิก',
+    cancelButtonText: 'กลับ',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      if (props.bill) {
+        props.bill.status = 'Cancelled'
+      }
+      emit('cancel', props.bill)
+      closeModal()
     }
-    emit('cancel', props.bill)
-    closeModal()
-  }
+  })
 }
 </script>

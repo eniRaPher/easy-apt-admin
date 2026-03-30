@@ -11,7 +11,7 @@
         </div>
         <div>
           <p class="text-sm font-medium text-slate-500">ห้องทั้งหมด</p>
-          <p class="text-2xl font-bold text-slate-800">120</p>
+          <p class="text-2xl font-bold text-slate-800">{{ totalRooms }}</p>
         </div>
       </div>
       
@@ -22,7 +22,7 @@
         </div>
         <div>
           <p class="text-sm font-medium text-slate-500">ห้องที่มีผู้เช่า (Occupied)</p>
-          <p class="text-2xl font-bold text-slate-800">105</p>
+          <p class="text-2xl font-bold text-slate-800">{{ occupiedRooms }}</p>
         </div>
       </div>
       
@@ -33,7 +33,7 @@
         </div>
         <div>
           <p class="text-sm font-medium text-slate-500">บิลรอชำระ</p>
-          <p class="text-2xl font-bold text-slate-800">15</p>
+          <p class="text-2xl font-bold text-slate-800">{{ pendingBillsCount }}</p>
         </div>
       </div>
       
@@ -43,8 +43,8 @@
           <TrendingUp class="w-6 h-6" />
         </div>
         <div>
-          <p class="text-sm font-medium text-slate-500">รายได้เดือนนี้</p>
-          <p class="text-2xl font-bold text-slate-800">฿452,000</p>
+          <p class="text-sm font-medium text-slate-500">รายได้เฉลี่ย (รวม)</p>
+          <p class="text-2xl font-bold text-slate-800">฿{{ totalIncome.toLocaleString() }}</p>
         </div>
       </div>
     </div>
@@ -66,5 +66,35 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Building2, Home, Clock, TrendingUp } from 'lucide-vue-next'
+import { dataStore } from '../store/dataStore'
+
+const totalRooms = computed(() => {
+  let count = 0
+  for (const b of dataStore.buildings) {
+    for (const f of b.floors) {
+      count += f.rooms.length
+    }
+  }
+  return count
+})
+
+const occupiedRooms = computed(() => {
+  let count = 0
+  for (const b of dataStore.buildings) {
+    for (const f of b.floors) {
+      count += f.rooms.filter(r => r.status === 'Occupied').length
+    }
+  }
+  return count
+})
+
+const pendingBillsCount = computed(() => {
+  return dataStore.bills.filter(b => b.status === 'Pending').length
+})
+
+const totalIncome = computed(() => {
+  return dataStore.bills.filter(b => b.status === 'Paid').reduce((sum, b) => sum + b.total, 0)
+})
 </script>

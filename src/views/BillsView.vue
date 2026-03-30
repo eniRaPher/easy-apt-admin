@@ -182,6 +182,7 @@ import { ref, computed } from 'vue'
 import { Plus, Download, Filter, FileX, FileEdit, Clock, CheckCircle, XCircle, Send, X, Receipt } from 'lucide-vue-next'
 import BillDetailModal from '../components/BillDetailModal.vue'
 import { settingsStore } from '../store/settingsStore'
+import { dataStore } from '../store/dataStore'
 
 const isVerifyModalOpen = ref(false)
 const selectedBill = ref(null)
@@ -198,17 +199,7 @@ const closeVerifyModal = () => {
 const filterMonth = ref('')
 const filterStatus = ref('all')
 
-const bills = ref([
-  { id: 1, code: 'INV-202310-001', room: 'A101', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4500, electric: 850, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5800, status: 'Paid' },
-  { id: 2, code: 'INV-202310-002', room: 'A102', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4500, electric: 620, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5570, status: 'Pending' },
-  { id: 3, code: 'INV-202310-003', room: 'B205', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 5000, electric: 1200, water: 200, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 6700, status: 'Draft' },
-  { id: 4, code: 'INV-202310-004', room: 'C301', createdAt: '01 ต.ค. 2023', monthCode: '2023-10', month: 'ตุลาคม 2023', rent: 4000, electric: 450, water: 100, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 4850, status: 'Cancelled' },
-  { id: 5, code: 'INV-202309-001', room: 'A101', createdAt: '01 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4500, electric: 800, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5750, status: 'Paid' },
-  { id: 6, code: 'INV-202309-002', room: 'A102', createdAt: '01 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4500, electric: 550, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5500, status: 'Paid' },
-  { id: 7, code: 'INV-202309-003', room: 'B205', createdAt: '04 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 5000, electric: 1100, water: 200, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 6600, status: 'Paid' },
-  { id: 8, code: 'INV-202309-004', room: 'C301', createdAt: '05 ก.ย. 2023', monthCode: '2023-09', month: 'กันยายน 2023', rent: 4000, electric: 480, water: 100, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 4880, status: 'Paid' },
-  { id: 9, code: 'INV-202308-001', room: 'A101', createdAt: '01 ส.ค. 2023', monthCode: '2023-08', month: 'สิงหาคม 2023', rent: 4500, electric: 820, water: 150, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], total: 5770, status: 'Paid' }
-])
+const bills = computed(() => dataStore.bills)
 
 const billsCounts = computed(() => {
   return {
@@ -222,12 +213,7 @@ const billsCounts = computed(() => {
 const isCreateBillModalOpen = ref(false)
 const selectedCustomerForNewBill = ref('')
 
-const availableCustomers = ref([
-  { id: 1, name: 'สมชาย รักดี', room: 'A101', parkingZone: 1 },
-  { id: 2, name: 'สมหญิง สุขใจ', room: 'A102', parkingZone: '' },
-  { id: 4, name: 'ปิติ ชูใจ', room: 'C301', parkingZone: 1 },
-  { id: 5, name: 'วีระ เก่งกาจ', room: 'A105', parkingZone: '' },
-])
+const availableCustomers = computed(() => dataStore.customers)
 
 const createNewBill = () => {
   selectedCustomerForNewBill.value = ''
@@ -252,7 +238,7 @@ const confirmCreateNewBill = () => {
 
   const otherTotal = snapshotOtherFees.reduce((acc, f) => acc + f.amount, 0)
   
-  bills.value.unshift({
+  dataStore.bills.unshift({
     id: newId,
     code: `INV-NEW-${newId.toString().padStart(3, '0')}`,
     room: customer.room,

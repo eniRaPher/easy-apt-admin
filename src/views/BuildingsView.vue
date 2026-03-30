@@ -260,27 +260,12 @@
 <script setup>
 import { ref, computed, reactive, watch } from 'vue'
 import { Plus, Edit, Trash2, X, Filter, AlertTriangle, Layers, Building, User, Wallet, FileText } from 'lucide-vue-next'
+import { dataStore } from '../store/dataStore'
 
-// --- Mock State ---
+// --- State ---
 const generateId = () => Math.random().toString(36).substr(2, 9)
 
-const buildings = ref([
-  {
-    id: 'b_1',
-    name: 'อาคาร A',
-    floors: [
-      { id: 'f_1_1', level: '1', rooms: [{ number: 'A101', status: 'Occupied', tenant: 'สมชาย รักดี', rent: 4500 }, { number: 'A102', status: 'Maintenance', tenant: null, rent: 4500 }] },
-      { id: 'f_1_2', level: '2', rooms: [{ number: 'A201', status: 'Vacant', tenant: null, rent: 4500 }, { number: 'A202', status: 'Occupied', tenant: 'มานะ ใจดี', rent: 4500 }] }
-    ]
-  },
-  {
-    id: 'b_2',
-    name: 'อาคาร B',
-    floors: [
-      { id: 'f_2_1', level: '1', rooms: [{ number: 'B101', status: 'Occupied', tenant: 'วันชัย งามสุด', rent: 5000 }] }
-    ]
-  }
-])
+const buildings = computed(() => dataStore.buildings)
 
 const selectedBuildingId = ref('b_1')
 
@@ -328,12 +313,12 @@ const openBuildingModal = (mode, building = null) => {
 const saveBuilding = () => {
   if (bModalMode.value === 'add') {
     const newBuilding = { id: `b_${generateId()}`, name: bForm.name, floors: [] }
-    buildings.value.push(newBuilding)
+    dataStore.buildings.push(newBuilding)
     selectedBuildingId.value = newBuilding.id
   } else {
-    const idx = buildings.value.findIndex(b => b.id === bForm.id)
+    const idx = dataStore.buildings.findIndex(b => b.id === bForm.id)
     if (idx !== -1) {
-      buildings.value[idx].name = bForm.name
+      dataStore.buildings[idx].name = bForm.name
     }
   }
   isBuildingModalOpen.value = false
@@ -444,7 +429,7 @@ const openConfirmDelete = (type, item, parentId = null) => {
 
 const confirmDelete = () => {
   if (deleteTarget.type === 'building') {
-    buildings.value = buildings.value.filter(b => b.id !== deleteTarget.item.id)
+    dataStore.buildings = dataStore.buildings.filter(b => b.id !== deleteTarget.item.id)
   } else if (deleteTarget.type === 'floor' && currentBuilding.value) {
     currentBuilding.value.floors = currentBuilding.value.floors.filter(f => f.id !== deleteTarget.item.id)
   } else if (deleteTarget.type === 'room' && currentBuilding.value) {

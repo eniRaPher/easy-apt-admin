@@ -32,11 +32,25 @@
               <p class="font-medium text-slate-800">{{ rentalData.endDate || 'ไม่ระบุ' }}</p>
             </div>
             <div>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">สัญญาเช่า (อ้างอิง)</p>
-              <div class="flex items-center space-x-2 mt-1">
-                <FileText class="w-4 h-4 text-blue-500" />
-                <a href="#" class="text-sm font-medium text-blue-600 hover:underline">สัญญาเช่า_{{roomNumber}}.pdf</a>
+              <div class="flex justify-between items-center mb-1 border-b border-slate-100 pb-1">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">สัญญาเช่า (อ้างอิง)</p>
+                <button @click="triggerContractUpload" class="text-xs text-primary-600 hover:text-primary-700 font-bold flex items-center bg-primary-50 hover:bg-primary-100 transition-colors px-2 py-1 rounded">
+                  <UploadCloud class="w-3 h-3 mr-1" /> อัปโหลด
+                </button>
               </div>
+              <div v-if="latestContract" class="flex items-center justify-between mt-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                <div class="flex items-center space-x-2 overflow-hidden">
+                  <FileText class="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  <a :href="latestContract.url" target="_blank" class="text-sm font-medium text-blue-600 hover:underline truncate max-w-[140px]" :title="latestContract.name">{{ latestContract.name }}</a>
+                </div>
+                <button v-if="roomContracts.length > 1" @click="showContractHistory" class="text-[10px] text-slate-500 hover:text-primary-600 underline font-medium flex-shrink-0 ml-2">ดูทั้งหมด ({{ roomContracts.length }})</button>
+              </div>
+              <div v-else class="text-sm text-slate-400 italic mt-2 bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 text-center">
+                ยังไม่มีการอัปโหลดสัญญา
+              </div>
+              
+              <!-- Hidden input for contract upload -->
+              <input type="file" ref="contractFileInput" class="hidden" accept=".pdf,image/*" @change="handleContractUpload" />
             </div>
           </div>
 
@@ -70,7 +84,7 @@
           </div>
           <h3 class="text-3xl font-black text-slate-800 mb-3">ห้องว่าง</h3>
           <p class="text-slate-500 mb-8 text-sm px-4 leading-relaxed">ห้องพร้อมเปิดให้เช่า สามารถนำผู้เช่าใหม่เข้าสู่ระบบและผูกสัญญาเช่าได้ทันที</p>
-          <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-lg shadow-sm flex items-center justify-center transition-colors text-base">
+          <button @click="isAssignTenantModalOpen = true" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-lg shadow-sm flex items-center justify-center transition-colors text-base">
             <Plus class="w-5 h-5 mr-2" />
             เพิ่มผู้เช่าใหม่
           </button>
@@ -116,7 +130,6 @@
                   </td>
                   <td class="px-6 py-4 text-center space-x-2 whitespace-nowrap">
                     <button @click="openVerifyModal(bill)" class="text-blue-600 hover:text-blue-700 font-bold text-xs transition-colors px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-md border border-blue-200">ตรวจสอบ</button>
-                    <button @click="openMessageModal(bill)" class="text-emerald-600 hover:text-emerald-700 font-bold text-xs transition-colors px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-md border border-emerald-200">ข้อความ</button>
                   </td>
                 </tr>
                 <tr v-if="allBills.length === 0">
@@ -125,6 +138,35 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Assign Tenant -->
+    <div v-if="isAssignTenantModalOpen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center"><UserCheck class="w-5 h-5 mr-2 text-primary-600"/> ผูกผู้เช่าเข้าห้อง {{ roomNumber }}</h3>
+          <button @click="closeAssignModal" class="text-slate-400 hover:text-slate-600"><X class="w-5 h-5"/></button>
+        </div>
+        <div class="p-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกผู้เช่าจากรายชื่อลูกค้าทั้งหมด</label>
+          <select v-model="selectedCustomerToAssign" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+            <option value="" disabled>-- เลือกผู้เช่า --</option>
+            <option v-for="c in availableToAssignCustomers" :key="c.id" :value="c.id">
+              {{ c.name }} ({{ c.phone }})
+            </option>
+          </select>
+          <p v-if="availableToAssignCustomers.length === 0" class="text-xs text-red-500 mt-2 flex items-center">
+            <AlertTriangle class="w-3 h-3 mr-1" /> ไม่มีรายชื่อผู้เช่าที่ว่างอยู่ (กรุณาไปเพิ่มที่หน้า Customers ก่อน)
+          </p>
+          <p v-else class="text-xs text-slate-500 mt-2 flex items-center"><CheckCircle class="w-3 h-3 mr-1 text-green-500" /> แสดงเฉพาะรายชื่อที่ยังไม่มีห้องพัก</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
+          <button @click="closeAssignModal" class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ยกเลิก</button>
+          <button :disabled="!selectedCustomerToAssign" @click="handleAssignTenant" class="px-4 py-2.5 text-sm font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 flex items-center transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            <Check class="w-4 h-4 mr-1.5" /> ยืนยันย้ายเข้า
+          </button>
         </div>
       </div>
     </div>
@@ -143,14 +185,14 @@
           </p>
           
           <div class="bg-red-50 rounded-lg p-4 mb-2 border border-red-100 text-left">
-            <label class="block text-xs font-bold text-red-800 uppercase mb-2">พิมพ์คำว่า "ยืนยันการย้ายออก" เพื่อดำเนินการต่อ</label>
+            <label class="block text-xs font-bold text-red-800 uppercase mb-2">พิมพ์คำว่า "ยืนยัน" เพื่อดำเนินการต่อ</label>
             <input v-model="moveOutConfirmText" type="text" class="w-full border-2 border-red-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none placeholder-red-300 text-red-900 font-bold" placeholder="พิมพ์ข้อความที่นี่...">
           </div>
         </div>
         
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-center space-x-3 gap-2">
           <button @click="closeMoveOutModal" class="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">ยกเลิก</button>
-          <button :disabled="moveOutConfirmText !== 'ยืนยันการย้ายออก'" @click="handleMoveOut" class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex justify-center items-center">
+          <button :disabled="moveOutConfirmText !== 'ยืนยัน'" @click="handleMoveOut" class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex justify-center items-center">
             <LogOut class="w-4 h-4 mr-2" /> ย้ายออกทันที
           </button>
         </div>
@@ -189,13 +231,86 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, UserCheck, FileText, History, Users, LogOut, AlertTriangle, CheckCircle, Plus, Wrench, Settings, X, FileCheck, Check, Send } from 'lucide-vue-next'
+import { ArrowLeft, UserCheck, FileText, History, Users, LogOut, AlertTriangle, CheckCircle, Plus, Wrench, Settings, X, FileCheck, Check, Send, UploadCloud } from 'lucide-vue-next'
 import BillDetailModal from '../components/BillDetailModal.vue'
+import { dataStore } from '../store/dataStore'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
 const roomNumber = ref('')
 const showAllBills = ref(false)
+
+// --- Contract Upload & History ---
+const roomContracts = ref([])
+const latestContract = computed(() => {
+  return roomContracts.value.length > 0 ? roomContracts.value[roomContracts.value.length - 1] : null
+})
+const contractFileInput = ref(null)
+
+const triggerContractUpload = () => {
+  if (contractFileInput.value) contractFileInput.value.click()
+}
+
+const handleContractUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    const fileUrl = URL.createObjectURL(file)
+    const newContract = {
+      id: Date.now(),
+      name: file.name,
+      url: fileUrl,
+      date: new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })
+    }
+    
+    roomContracts.value.push(newContract)
+
+    // Save to global state so it persists if navigating back
+    for (const b of dataStore.buildings) {
+      for (const f of b.floors) {
+        const room = f.rooms.find(r => r.number === roomNumber.value)
+        if (room) {
+          if (!room.contracts) room.contracts = []
+          room.contracts.push(newContract)
+        }
+      }
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'อัปโหลดสำเร็จ',
+      text: `บันทึกสัญญา ${file.name} เข้าสู่ระบบเรียบร้อยแล้ว`,
+      timer: 1500,
+      showConfirmButton: false
+    })
+
+    // Reset input
+    event.target.value = ''
+  }
+}
+
+const showContractHistory = () => {
+  const historyHtml = roomContracts.value.slice().reverse().map((c, i) => `
+    <div class="flex justify-between items-center p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors text-left last:border-0 rounded">
+      <div class="flex items-center space-x-3 overflow-hidden">
+        <span class="bg-primary-100 text-primary-700 px-2.5 py-1 rounded text-xs font-bold whitespace-nowrap">ฉบับที่ ${roomContracts.value.length - i}</span>
+        <a href="${c.url}" target="_blank" class="text-blue-600 hover:underline font-medium text-sm truncate max-w-[160px] block">${c.name}</a>
+      </div>
+      <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full whitespace-nowrap">${c.date}</span>
+    </div>
+  `).join('')
+
+  Swal.fire({
+    title: 'ประวัติเอกสารสัญญาเช่า',
+    html: `<div class="mt-4 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-inner">${historyHtml}</div>`,
+    confirmButtonText: 'ปิดหน้าต่าง',
+    width: '500px',
+    customClass: {
+      popup: 'rounded-xl',
+      title: 'text-xl font-bold text-slate-800'
+    }
+  })
+}
 
 const isMoveOutModalOpen = ref(false)
 const moveOutConfirmText = ref('')
@@ -206,11 +321,87 @@ const closeMoveOutModal = () => {
 }
 
 const handleMoveOut = () => {
-  if (moveOutConfirmText.value === 'ยืนยันการย้ายออก') {
-    alert('✅ บันทึกการย้ายออกเรียบร้อยแล้ว สถานะห้องเปลี่ยนเป็น "ว่าง"')
-    closeMoveOutModal()
-    router.push('/buildings')
+  if (moveOutConfirmText.value === 'ยืนยัน') {
+    // update store recursively to mark as vacant
+    for (const b of dataStore.buildings) {
+      for (const f of b.floors) {
+        const room = f.rooms.find(r => r.number === roomNumber.value)
+        if (room) {
+          room.status = 'Vacant'
+          room.tenant = null
+        }
+      }
+    }
+    
+    // clear tenant's room status in customers
+    const customer = dataStore.customers.find(c => c.room === roomNumber.value)
+    if (customer) {
+      customer.room = ''
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'สำเร็จ',
+      text: 'บันทึกการย้ายออกเรียบร้อยแล้ว สถานะห้องเปลี่ยนเป็น "ว่าง"',
+      confirmButtonText: 'ตกลง'
+    }).then(() => {
+      closeMoveOutModal()
+      router.push('/buildings')
+    })
   }
+}
+
+// --- Tenant Assignment ---
+const isAssignTenantModalOpen = ref(false)
+const selectedCustomerToAssign = ref('')
+
+const availableToAssignCustomers = computed(() => {
+  return dataStore.customers.filter(c => !c.room || c.room === '')
+})
+
+const closeAssignModal = () => {
+  isAssignTenantModalOpen.value = false
+  selectedCustomerToAssign.value = ''
+}
+
+const handleAssignTenant = () => {
+  if (!selectedCustomerToAssign.value) return
+  
+  const customer = dataStore.customers.find(c => c.id === selectedCustomerToAssign.value)
+  if (!customer) return
+
+  let found = false
+  for (const b of dataStore.buildings) {
+    for (const f of b.floors) {
+      const room = f.rooms.find(r => r.number === roomNumber.value)
+      if (room) {
+        room.status = 'Occupied'
+        room.tenant = customer.name
+        found = true
+        break
+      }
+    }
+    if (found) break
+  }
+
+  customer.room = roomNumber.value
+  
+  rentalData.value = {
+    status: 'Occupied',
+    tenantName: customer.name,
+    startDate: new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' }),
+    endDate: null,
+    contractId: `CT-${new Date().getFullYear()}-${roomNumber.value}`
+  }
+
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: `เพิ่มผู้เช่า ${customer.name} เข้าห้อง ${roomNumber.value} สำเร็จ`,
+    confirmButtonText: 'ตกลง'
+  }).then(() => {
+    closeAssignModal()
+  })
 }
 
 // --- Bills Action Modals ---
@@ -238,8 +429,14 @@ const closeMessageModal = () => {
 }
 
 const sendBillMessage = () => {
-  alert('✅ ระบบได้ส่งข้อความถึงผู้เช่าผ่านทางระบบข้อความหลักและ LINE สำเร็จแล้ว')
-  closeMessageModal()
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: 'ระบบได้ส่งข้อความถึงผู้เช่าผ่านทางระบบข้อความหลักและ LINE สำเร็จแล้ว',
+    confirmButtonText: 'ตกลง'
+  }).then(() => {
+    closeMessageModal()
+  })
 }
 
 // Mock Data
@@ -251,20 +448,10 @@ const rentalData = ref({
   contractId: 'CT-2023-001'
 })
 
-const allBills = ref([
-  { id: 1, month: 'ตุลาคม 2023', code: 'INV-10-23', total: 5800, status: 'Pending', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 2, month: 'กันยายน 2023', code: 'INV-09-23', total: 6100, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 3, month: 'สิงหาคม 2023', code: 'INV-08-23', total: 5950, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 110, elecRate: 8, waterUnits: 13.5, waterRate: 20 },
-  { id: 4, month: 'กรกฎาคม 2023', code: 'INV-07-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 5, month: 'มิถุนายน 2023', code: 'INV-06-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 6, month: 'พฤษภาคม 2023', code: 'INV-05-23', total: 6200, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 150, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 7, month: 'เมษายน 2023', code: 'INV-04-23', total: 6500, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 175, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 8, month: 'มีนาคม 2023', code: 'INV-03-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 9, month: 'กุมภาพันธ์ 2023', code: 'INV-02-23', total: 5900, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 10, month: 'มกราคม 2023', code: 'INV-01-23', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 },
-  { id: 11, month: 'ธันวาคม 2022', code: 'INV-12-22', total: 6100, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 125, elecRate: 8, waterUnits: 15, waterRate: 20 },
-  { id: 12, month: 'พฤศจิกายน 2022', code: 'INV-11-22', total: 5800, status: 'Paid', rent: 4500, otherFees: [{id:1, name:'ค่าส่วนกลาง', amount:300}], elecUnits: 100, elecRate: 8, waterUnits: 10, waterRate: 20 }
-])
+const allBills = computed(() => {
+  if (rentalData.value.status !== 'Occupied') return []
+  return dataStore.bills.filter(b => b.room === roomNumber.value)
+})
 
 const displayedBills = computed(() => {
   return showAllBills.value ? allBills.value : allBills.value.slice(0, 4)
@@ -295,16 +482,41 @@ onMounted(() => {
   const id = route.params.id
   roomNumber.value = id
   
-  if (id === 'A102') {
-    rentalData.value = { status: 'Maintenance', tenantName: null, startDate: null, endDate: null, contractId: null }
-    allBills.value = [] // ห้องซ่อมบำรุงไม่มีประวัติบิลแสดง
-  } else if (id === 'A201') {
+  let foundRoom = null
+  for (const b of dataStore.buildings) {
+    for (const f of b.floors) {
+      const rm = f.rooms.find(r => r.number === id)
+      if (rm) {
+        foundRoom = rm
+        break
+      }
+    }
+  }
+
+  if (foundRoom) {
+    // Load existing contracts or mock a default one if occupied
+    let contractsList = foundRoom.contracts || []
+    if (contractsList.length === 0 && foundRoom.status === 'Occupied') {
+      contractsList = [{
+        id: 1,
+        name: `สัญญาเช่า_${id}.pdf`,
+        url: '#',
+        date: '01 ม.ค. 2023'
+      }]
+      foundRoom.contracts = contractsList
+    }
+    roomContracts.value = contractsList
+
+    rentalData.value = {
+      status: foundRoom.status,
+      tenantName: foundRoom.tenant,
+      startDate: foundRoom.status === 'Occupied' ? '01 มกราคม 2023' : null,
+      endDate: null,
+      contractId: foundRoom.status === 'Occupied' ? `CT-2023-${id}` : null
+    }
+  } else {
+    roomContracts.value = []
     rentalData.value = { status: 'Vacant', tenantName: null, startDate: null, endDate: null, contractId: null }
-    allBills.value = [] // ห้องว่างไม่มีประวัติบิลแสดง
-  } else if (id === 'A202') {
-    rentalData.value.tenantName = 'มานะ ใจดี'
-  } else if (id === 'B101') {
-    rentalData.value.tenantName = 'วันชัย งามสุด'
   }
 })
 </script>

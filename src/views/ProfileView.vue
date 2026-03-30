@@ -91,11 +91,17 @@
 <script setup>
 import { Building, Phone, MessageCircle, Facebook, MapPin, Save } from 'lucide-vue-next'
 import { settingsStore } from '../store/settingsStore'
+import Swal from 'sweetalert2'
 
 const profileData = settingsStore
 
 const saveProfile = () => {
   // In a real app, you would save to Backend API here
-  alert(`บันทึกข้อมูลพื้นฐานเรียบร้อยแล้ว!\n\nชื่อ: ${profileData.projectName}\nติดต่อ: ${profileData.phone}`)
+  Swal.fire({
+    icon: 'success',
+    title: 'สำเร็จ',
+    text: `บันทึกข้อมูลพื้นฐานเรียบร้อยแล้ว!\n\nชื่อ: ${profileData.projectName}\nติดต่อ: ${profileData.phone}`,
+    confirmButtonText: 'ตกลง'
+  })
 }
 </script>

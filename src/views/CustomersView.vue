@@ -166,14 +166,9 @@
 import { ref, reactive, computed } from 'vue'
 import { Plus, X, AlertTriangle } from 'lucide-vue-next'
 import { settingsStore } from '../store/settingsStore'
+import { dataStore } from '../store/dataStore'
 
-const customers = ref([
-  { id: 1, name: 'สมชาย รักดี', idCard: '1100200300400', room: 'A101', phone: '081-234-5678', parkingZone: 1, status: 'Active' },
-  { id: 2, name: 'สมหญิง สุขใจ', idCard: '1200300400500', room: 'A102', phone: '089-876-5432', parkingZone: '', status: 'Active' },
-  { id: 3, name: 'มานะ มานี', idCard: '1300400500600', room: 'B205', phone: '085-111-2222', parkingZone: 2, status: 'Inactive' },
-  { id: 4, name: 'ปิติ ชูใจ', idCard: '1400500600700', room: 'C301', phone: '082-333-4444', parkingZone: 1, status: 'Active' },
-  { id: 5, name: 'วีระ เก่งกาจ', idCard: '1500600700800', room: 'A105', phone: '084-555-6666', parkingZone: '', status: 'Active' },
-])
+const customers = computed(() => dataStore.customers)
 
 // --- Form & Create/Edit Modal Logic ---
 const isModalOpen = ref(false)
@@ -236,12 +231,12 @@ const closeModal = () => {
 const saveCustomer = () => {
   if (modalMode.value === 'add') {
     // Gen ID roughly
-    const newId = customers.value.length ? Math.max(...customers.value.map(c => c.id)) + 1 : 1
-    customers.value.push({ id: newId, ...form })
+    const newId = dataStore.customers.length ? Math.max(...dataStore.customers.map(c => c.id)) + 1 : 1
+    dataStore.customers.unshift({ id: newId, ...form })
   } else if (modalMode.value === 'edit') {
-    const index = customers.value.findIndex(c => c.id === editingId.value)
+    const index = dataStore.customers.findIndex(c => c.id === editingId.value)
     if (index !== -1) {
-      customers.value[index] = { id: editingId.value, ...form }
+      dataStore.customers[index] = { id: editingId.value, ...form }
     }
   }
   closeModal()
@@ -258,7 +253,7 @@ const openDeleteModal = (customer) => {
 
 const confirmDelete = () => {
   if (customerToDelete.value) {
-    customers.value = customers.value.filter(c => c.id !== customerToDelete.value.id)
+    dataStore.customers = dataStore.customers.filter(c => c.id !== customerToDelete.value.id)
   }
   isDeleteModalOpen.value = false
   customerToDelete.value = null

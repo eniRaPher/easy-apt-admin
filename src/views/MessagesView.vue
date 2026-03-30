@@ -132,25 +132,44 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { MessageSquare, MessageCircle, Mail, Send, Calendar, Clock } from 'lucide-vue-next'
+import { dataStore } from '../store/dataStore'
+import Swal from 'sweetalert2'
 
-const broadcastSettings = reactive({
-  sms: true,
-  line: true,
-  email: false
+const broadcastSettings = computed(() => dataStore.broadcast.settings)
+const broadcastType = computed({
+  get: () => dataStore.broadcast.broadcastType,
+  set: (val) => dataStore.broadcast.broadcastType = val
 })
-
-const broadcastType = ref('sms')
-const scheduleDay = ref('25')
-const scheduleTime = ref('10:00')
-const messageBody = ref('เรียนคุณ {name} ห้อง {room},\n\nทางอพาร์ทเมนต์ขอแจ้งเตือนยอดค้างชำระจำนวน {amount} บาท รบกวนชำระเงินภายในวันที่ 5 ของเดือน\n\nขอบคุณค่ะ')
+const scheduleDay = computed({
+  get: () => dataStore.broadcast.scheduleDay,
+  set: (val) => dataStore.broadcast.scheduleDay = val
+})
+const scheduleTime = computed({
+  get: () => dataStore.broadcast.scheduleTime,
+  set: (val) => dataStore.broadcast.scheduleTime = val
+})
+const messageBody = computed({
+  get: () => dataStore.broadcast.messageBody,
+  set: (val) => dataStore.broadcast.messageBody = val
+})
 
 const sendMessage = () => {
   if (scheduleDay.value && scheduleTime.value) {
-    alert(`ตั้งเวลาส่งข้อความผ่าน ${broadcastType.value} ทุกวันที่ ${scheduleDay.value} เวลา ${scheduleTime.value} น. เรียบร้อยแล้ว`)
+    Swal.fire({
+      icon: 'success',
+      title: 'สำเร็จ',
+      text: `ตั้งเวลาส่งข้อความผ่าน ${broadcastType.value} ทุกวันที่ ${scheduleDay.value} เวลา ${scheduleTime.value} น. เรียบร้อยแล้ว`,
+      confirmButtonText: 'ตกลง'
+    })
   } else {
-    alert(`กำลังส่งข้อความผ่าน ${broadcastType.value} ไปยังผู้เช่า...`)
+    Swal.fire({
+      icon: 'info',
+      title: 'กำลังส่ง...',
+      text: `กำลังส่งข้อความผ่าน ${broadcastType.value} ไปยังผู้เช่า...`,
+      confirmButtonText: 'ตกลง'
+    })
   }
 }
 </script>
