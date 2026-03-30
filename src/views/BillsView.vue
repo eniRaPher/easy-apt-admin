@@ -143,6 +143,7 @@
       </div>
     </div>
 
+    
     <!-- Select Customer Modal (Create Bill) -->
     <div v-if="isCreateBillModalOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
